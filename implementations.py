@@ -181,9 +181,8 @@ def  ridge_regression(y,tx,lambda_):
     d = tx.shape[1]
 
     XTX = tx.transpose()@tx
-    lambda_prime = lambda_/(2*N)
 
-    w = np.linalg.solve(XTX + lambda_prime*np.identity(d), tx.transpose()@y)
+    w = np.linalg.solve(XTX + 2 * N * lambda_ * np.identity(d), tx.T @ y)
     loss = compute_loss(y, tx, w)
     return w, loss
 
@@ -211,19 +210,47 @@ def logistic_regression(y, tx, initial_w, max_iters, gamma):
     """
     w = initial_w
     N = y.shape[0]
+
+    z = tx @ w
+    pred = 1 / (1 + np.exp(-z))
+    pred = np.clip(pred, 1e-15, 1 - 1e-15)
+    loss = -np.mean(y * np.log(pred) + (1 - y) * np.log(1 - pred))
     
+    for _ in range(max_iters):
+        grad = tx.T @ (pred - y) / N
+        w = w - gamma * grad
+
+        z = tx @ w
+        pred = 1 / (1 + np.exp(-z))
+        pred = np.clip(pred, 1e-15, 1 - 1e-15)
+        loss = -np.mean(y * np.log(pred) + (1 - y) * np.log(1 - pred))
+    return w, loss
+
+def reg_logistic_regression(y, tx, lambda_, initial_w, max_iters, gamma):
+    """
+    Regularized logistic regression (L2) using gradient descent.
+    """
+    w = initial_w
+    N = y.shape[0]
+
     for _ in range(max_iters):
         z = tx @ w
         pred = 1 / (1 + np.exp(-z))
         pred = np.clip(pred, 1e-15, 1 - 1e-15)
         
-        grad = tx.T @ (pred - y) / N
-        w = w - gamma * grad
-    
+        # Gradient with L2 regularization
+        grad = tx.T @ (pred - y) / N + 2 * lambda_ * w
+        w -= gamma * grad
+
+    # Compute logistic loss (without regularization term)
+    z = tx @ w
+    pred = 1 / (1 + np.exp(-z))
+    pred = np.clip(pred, 1e-15, 1 - 1e-15)
     loss = -np.mean(y * np.log(pred) + (1 - y) * np.log(1 - pred))
+    
     return w, loss
 
-def reg_logistic_regression(y, tx, lambda_, initial_w, max_iters, gamma,sample_weights):
+def reg_logistic_regression_2(y, tx, lambda_, initial_w, max_iters, gamma,sample_weights):
 
     """
     Regularized logistic regression (L2) using gradient descent.
@@ -480,7 +507,7 @@ def cross_validation(y, x,x_winsor, k_fold, method, lambda_, max_iters, gamma,pr
 
         # Train model
         initial_w = np.zeros(x_train.shape[1])
-        w, train_loss = reg_logistic_regression(y_train_lr, x_train, lambda_, initial_w, max_iters, gamma, sample_weights)
+        w, train_loss = reg_logistic_regression_2(y_train_lr, x_train, lambda_, initial_w, max_iters, gamma)
 
         # Predict on test set
         z_test = x_test @ w
