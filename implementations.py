@@ -88,12 +88,12 @@ def mean_squared_error_gd(y, tx, initial_w, max_iters, gamma):
         loss: final loss value 
     """
     w = initial_w
+    loss = compute_loss(y, tx, w)
     for n_iter in range(max_iters):
 
         grad = compute_gradient(y, tx, w)
+        w = w - gamma * grad
         loss = compute_loss(y, tx, w)
-
-        w = w - gamma*grad
 
     return w, loss
 
@@ -133,6 +133,7 @@ def mean_squared_error_sgd(y, tx, initial_w, max_iters, gamma):
     batch_size = 1
     N = y.shape[0]
     w = initial_w
+    loss = compute_loss(y, tx, w)
 
     for n_iter in range(max_iters):
 
@@ -141,9 +142,9 @@ def mean_squared_error_sgd(y, tx, initial_w, max_iters, gamma):
         tx_batch = tx[batch_indices]
 
         grad = compute_stoch_gradient(y_batch, tx_batch, w)
-        loss = compute_loss(y, tx, w)
 
         w = w - gamma * grad
+        loss = compute_loss(y, tx, w)
 
     return w, loss
 
@@ -223,6 +224,30 @@ def logistic_regression(y, tx, initial_w, max_iters, gamma):
     return w, loss
 
 def reg_logistic_regression(y, tx, lambda_, initial_w, max_iters, gamma,sample_weights):
+
+    """
+    Regularized logistic regression (L2) using gradient descent.
+
+    Args:
+        y : array, shape (N,)
+            Binary labels (0 or 1) for N samples.
+        tx : array, shape (N, D)
+            Feature matrix with N samples and D features.
+        lambda_ : float
+            Regularization parameter for L2 penalty.
+        initial_w : np.ndarray, shape (D,)
+            Initial weights for the model parameters.
+        max_iters : int
+            Number of iterations for gradient descent.
+        gamma : float
+            Step size for gradient descent.
+    
+    Returns:
+        w : array, shape (D,)
+            Final optimized weights.
+        loss : float
+            Logistic loss corresponding to the final weights (without regularization term).
+    """
 
     w = initial_w
     N = y.shape[0]
